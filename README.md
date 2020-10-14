@@ -6,7 +6,7 @@
 
 ## Description
 
-A very simple REST library to use variables in PLCnext AXC F 2152 PLC from Python.
+A simple REST library to use variables in PLCnext AXC F 2152 PLC from Python.
 
 ## Contributing
 
