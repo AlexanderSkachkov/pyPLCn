@@ -4,7 +4,7 @@ import time
 if __name__ == '__main__':
     Plc = pyPLCnext()
     Plc.set_var_names(['LevelMinimum', 'LevelMaximum', 'Robot.Test_Var', 'LevelCurrent'])
-    Plc.connect('192.168.1.10', login='user', password='12345', poll_time=100)
+    Plc.connect('192.168.1.10', poll_time=100)
     while True:
         Plc.set_var('LevelMinimum', '500')
         Plc.set_var('LevelMaximum', '800')
