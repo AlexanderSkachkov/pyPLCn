@@ -1,0 +1,8 @@
+__init__.py
+pyPLCnext.py
+setup.py
+pyPLCnext.egg-info/PKG-INFO
+pyPLCnext.egg-info/SOURCES.txt
+pyPLCnext.egg-info/dependency_links.txt
+pyPLCnext.egg-info/requires.txt
+pyPLCnext.egg-info/top_level.txt
