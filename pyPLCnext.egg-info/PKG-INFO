@@ -1,6 +1,6 @@
 Metadata-Version: 1.0
 Name: pyPLCnext
-Version: 1.0.1
+Version: 1.0.0
 Summary: A very simple REST library to use variables in PLCnext AXC F 2152 PLC from Python.
 Home-page: https://github.com/AlexanderSkachkov/PyPLCnext
 Author: Alexander Skachkov
