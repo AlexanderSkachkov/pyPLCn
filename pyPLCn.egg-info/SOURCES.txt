@@ -1,0 +1,9 @@
+README.md
+__init__.py
+pyPLCn.py
+setup.py
+pyPLCn.egg-info/PKG-INFO
+pyPLCn.egg-info/SOURCES.txt
+pyPLCn.egg-info/dependency_links.txt
+pyPLCn.egg-info/requires.txt
+pyPLCn.egg-info/top_level.txt

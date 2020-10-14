@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/pyPLCnext.iml" filepath="$PROJECT_DIR$/.idea/pyPLCnext.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/pyPLCn.iml" filepath="$PROJECT_DIR$/.idea/pyPLCn.iml" />
     </modules>
   </component>
 </project>

@@ -1,0 +1,10 @@
+Metadata-Version: 1.0
+Name: pyPLCn
+Version: 1.0.0
+Summary: A simple REST-based library to use variables in PLCnext(c) AXC F 2152 PLC from Python.
+Home-page: https://github.com/AlexanderSkachkov/PyPLCn
+Author: Alexander Skachkov
+Author-email: lex.skachkov.it@gmail.com
+License: MIT
+Description: UNKNOWN
+Platform: UNKNOWN

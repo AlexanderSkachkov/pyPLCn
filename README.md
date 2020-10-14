@@ -1,4 +1,4 @@
-# PyPLCnext
+# PyPLCn
 
 | Date       | Version | Author       |
 |------------|---------|--------------|
@@ -6,7 +6,7 @@
 
 ## Description
 
-A simple REST library to use variables in PLCnext AXC F 2152 PLC from Python.
+A simple REST library to use variables in PLCnext(c) AXC F 2152 PLC from Python.
 
 ## Contributing
 
@@ -14,7 +14,7 @@ Contributions to this project are welcome.
 
 ## Installing
 
-Run `pip install PyPLCnext`
+Run `pip install PyPLCn`
 
 ## Usage
 
@@ -36,7 +36,7 @@ If you use HMI authentication you must set login name and password in method `Pl
 |------------ |-----------|
 |Controller| AXC F 2152 |
 |FW | 2020.0 LTS or later |
-|PLCnext Engineer| 2020.0 LTS or later |
+|PLCnext(c) Engineer(c)| 2020.0 LTS or later |
 |Python| Version 3 or later |
 
 ## Exaple usage
@@ -48,11 +48,11 @@ Run code below
 On HMI page you can see how values `LevelMinimum` and `LevelMaximum` change states, and in Python console you can see value `LevelCurrent`
 
 ```
-from pyPLCnext import pyPLCnext
+from pyPLCn import pyPLCn
 import time
 
 if __name__ == '__main__':
-    Plc = pyPLCnext()
+    Plc = pyPLCn()
     Plc.set_var_names(['LevelMinimum', 'LevelMaximum', 'Robot.Test_Var', 'LevelCurrent'])
     Plc.connect('192.168.1.10', poll_time=100)
     while True:
@@ -75,3 +75,7 @@ if __name__ == '__main__':
         print('#####################################')
         time.sleep(0.5)
 ```
+
+## Warning note!
+
+Not for industrial usage! Use it on you own risk.

@@ -11,7 +11,7 @@ urllib3.disable_warnings()
 logging.basicConfig(level=logging.INFO)
 
 
-class pyPLCnext(object):
+class pyPLCn(object):
 
     def __init__(self):
         self._run_flag = False

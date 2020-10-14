@@ -1,8 +1,8 @@
-from pyPLCnext import pyPLCnext
+from pyPLCn import pyPLCn
 import time
 
 if __name__ == '__main__':
-    Plc = pyPLCnext()
+    Plc = pyPLCn()
     Plc.set_var_names(['LevelMinimum', 'LevelMaximum', 'Robot.Test_Var', 'LevelCurrent'])
     Plc.connect('192.168.1.10', poll_time=100)
     while True:
