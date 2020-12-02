@@ -38,6 +38,13 @@ class pyPLCn(object):
     def __del__(self):
         self._run_flag = False
 
+    def close(self):
+        """Close connection
+        :rtype: None
+        """
+        self._run_flag = False
+        self.s.close()
+
     def _get_session_id(self, ip=''):
         try:
             response = self.s.post('https://{}:443/_pxc_api/v1.2/sessions/'.format(ip), data='stationID=99', verify=False)
@@ -145,6 +152,7 @@ class pyPLCn(object):
         self._get_vars_group(ip=self._ip)
         if not self._run_flag:
             self._run_flag = True
+            self._worker_thread.setDaemon(True)
             self._worker_thread.start()
 
     def is_connected(self):
@@ -156,39 +164,23 @@ class pyPLCn(object):
     def _task(self):
         while self._run_flag:
             try:
-                if not self._write:
-                    headers = {'Authorization': 'Bearer {}'.format(self._access_token)}
-                    response = self.s.get('https://{0}:443/_pxc_api/v1.2/groups/{1}/?sessionID={2}&'.format(self._ip,
-                                                                                                            self.vars_group,
-                                                                                                            self._session_id),
-                                          verify=False, headers=headers)
-                    self._status_code = int(response.status_code)
-                    if self._status_code == 200:
-                        self.read_vars = json.loads(response.text)['variables']
-                        self._connected = True
-                    else:
-                        self._connected = False
+                headers = {'Authorization': 'Bearer {}'.format(self._access_token)}
+                response = self.s.get('https://{0}:443/_pxc_api/v1.2/groups/{1}/?sessionID={2}&'.format(self._ip,
+                                                                                                        self.vars_group,
+                                                                                                        self._session_id),
+                                      verify=False, headers=headers)
+                self._status_code = int(response.status_code)
+                if self._status_code == 200:
+                    self.read_vars = json.loads(response.text)['variables']
+                    self._connected = True
                 else:
-                    temp_json = json.loads('{"sessionID": "", "pathPrefix": "Arp.Plc.Eclr/", "variables":""}')
-                    temp_json['sessionID'] = self._session_id
-                    temp_json['variables'] = self._set_var
-                    request = str(temp_json).replace("""'""", '''"''')
-                    headers = {'Authorization': 'Bearer {}'.format(self._access_token)}
-                    response = self.s.put('https://{}:443/_pxc_api/v1.2/variables/'.format(self._ip), data=request,
-                                          verify=False, headers=headers)
-                    self._status_code = int(response.status_code)
-                    if self._status_code == 200:
-                        self._connected = True
-                    else:
-                        self._connected = False
-                    self._set_var = []
-                    self._write = False
+                    self._connected = False
             except Exception as e:
                 self._connected = False
                 self.s.close()
                 logging.error('Connection error! {}'.format(e))
             finally:
-                if not self._connected:
+                if not self._connected and self._run_flag:
                     for var in self.read_vars:
                         var['value'] = None
                     logging.error('Connection error, trying to reconnect in 5 seconds!')
@@ -217,6 +209,19 @@ class pyPLCn(object):
         :param value: Value in string format like "True" "10" etc.
         :rtype: None
         """
-        self._set_var.append({"path": str(var_name), "value": str(value).lower(),
-                              "valueType": "Constant"})
-        self._write = True
+        if self._connected:
+            temp_json = json.loads('{"sessionID": "", "pathPrefix": "Arp.Plc.Eclr/", "variables":""}')
+            temp_json['sessionID'] = self._session_id
+            temp_json['variables'] = [{"path": str(var_name), "value": str(value).lower(),
+                                       "valueType": "Constant"}]
+            request = str(temp_json).replace("""'""", '''"''')
+            headers = {'Authorization': 'Bearer {}'.format(self._access_token)}
+            response = self.s.put('https://{}:443/_pxc_api/v1.2/variables/'.format(self._ip), data=request,
+                                  verify=False, headers=headers)
+            self._status_code = int(response.status_code)
+            if self._status_code == 200:
+                self._connected = True
+            else:
+                self._connected = False
+        else:
+            pass
