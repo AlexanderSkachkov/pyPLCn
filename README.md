@@ -18,7 +18,7 @@ Run `pip install PyPLCn`
 
 ## Usage
 
-Make to any global variable hmi Tag
+Make to any global variable HMI tag, or set HMI flag to program tag.
 
 Put variable to list - `Plc.set_var_names(['LevelMinimum', 'LevelMaximum', 'Robot.Test_Var', 'LevelCurrent'])`
 
