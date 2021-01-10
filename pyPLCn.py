@@ -217,10 +217,13 @@ class pyPLCn(object):
         :rtype: str or None
         """
         if self._status_code == 200:
-            for var in self.read_vars:
-                if var_name == var['path']:
-                    break
-            return var['value']
+            if len(self.read_vars) > 0:
+                for var in self.read_vars:
+                    if var_name == var['path']:
+                        break
+                return var['value']
+            else:
+                pass
         else:
             pass
 
