@@ -19,6 +19,7 @@ class pyPLCn(object):
         self._poll_time = 500
         self._ip = ''
         self._session_id = ''
+        self._station_id = 99
         self.vars_group = ''
         self.vars = []
         self._worker_thread = threading.Thread(target=self._task)
@@ -49,7 +50,8 @@ class pyPLCn(object):
 
     def _get_session_id(self, ip=''):
         try:
-            response = self.s.post('https://{}:443/_pxc_api/v1.2/sessions/'.format(ip), data='stationID=99',
+            response = self.s.post('https://{}:443/_pxc_api/v1.2/sessions/'.format(ip),
+                                   data='stationID={}'.format(self._station_id),
                                    verify=False, timeout=self._timeout)
             if int(response.status_code) == 201:
                 self._session_id = json.loads(response.text)['sessionID']
@@ -173,17 +175,19 @@ class pyPLCn(object):
         """
         self.vars = vars
 
-    def connect(self, ip='127.0.0.1', login='', password='', poll_time=100):
+    def connect(self, ip='127.0.0.1', login='', password='', poll_time=100, station_id=99):
         """Connect to PLC. If you not use authentication leave login and password field blank
         :param ip: IP address of PLC.
         :param login: username with "EHmiViewer", "EHmiChanger" rights.
         :param password: password from account.
         :param poll_time: time of update variables.
+        :param station_id: station id of connection, need if use multiple connections.
         :rtype: None
         """
 
         self._ip = ip
         self._poll_time = poll_time
+        self._station_id = station_id
         self._get_session_id(ip=self._ip)
         if not login == '' and not password == '':
             self._login = login
