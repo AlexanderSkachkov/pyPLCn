@@ -19,7 +19,6 @@ class pyPLCn(object):
         self._poll_time = 500
         self._ip = ''
         self._session_id = ''
-        self._station_id = '99'
         self.vars_group = ''
         self.vars = []
         self._worker_thread = threading.Thread(target=self._task)
@@ -35,6 +34,8 @@ class pyPLCn(object):
         self._set_var = []
         self._set_var_value = ''
         self._connected = False
+        self._timeout = 10
+        self.last_error = ''
 
     def __del__(self):
         self._run_flag = False
@@ -48,15 +49,16 @@ class pyPLCn(object):
 
     def _get_session_id(self, ip=''):
         try:
-            response = self.s.post('https://{}:443/_pxc_api/v1.2/sessions/'.format(ip),
-                                   data='stationID={}'.format(self._station_id),
-                                   verify=False)
+            response = self.s.post('https://{}:443/_pxc_api/v1.2/sessions/'.format(ip), data='stationID=99',
+                                   verify=False, timeout=self._timeout)
             if int(response.status_code) == 201:
                 self._session_id = json.loads(response.text)['sessionID']
                 logging.info('Session ID = {}'.format(self._session_id))
                 self._connected = True
             else:
                 logging.error('Error get session ID! {}'.format(dict(response.text))['error']['details'][0]['reason'])
+                self.last_error = 'Error get session ID! {}'.format(dict(response.text))['error']['details'][0][
+                    'reason']
                 self._connected = False
         except Exception as e:
             self._connected = False
@@ -70,7 +72,7 @@ class pyPLCn(object):
             request = str(temp_json).replace("""'""", '''"''')
             headers = {'Authorization': 'Bearer {}'.format(self._access_token)}
             response = self.s.post('https://{}:443/_pxc_api/v1.2/groups/'.format(ip), headers=headers,
-                                   data=request, verify=False)
+                                   data=request, verify=False, timeout=self._timeout)
             if int(response.status_code) == 201:
                 self.vars_group = json.loads(response.text)['id']
                 logging.info('Vars group = {}'.format(self.vars_group))
@@ -78,6 +80,8 @@ class pyPLCn(object):
             else:
                 logging.error('Error set vars! >>{}<<'.format(json.loads(response.text)
                                                               ['error']['details'][0]['reason']))
+                self.last_error = 'Error set vars! >>{}<<'.format(json.loads(response.text)
+                                                                  ['error']['details'][0]['reason'])
                 self._connected = False
         except Exception as e:
             self._connected = False
@@ -92,14 +96,17 @@ class pyPLCn(object):
             temp_json = json.loads('{"response_type":"code","state":"","scope":"variables"}')
             temp_json['state'] = self._clientState
             request = str(temp_json).replace("""'""", '''"''')
-            response = self.s.post('https://{}:443/_pxc_api/v1.2/auth/auth-token'.format(self._ip), data=request, verify=False)
+            response = self.s.post('https://{}:443/_pxc_api/v1.2/auth/auth-token'.format(self._ip), data=request,
+                                   verify=False, timeout=self._timeout)
             if int(response.status_code) == 200:
                 self._auth_code = json.loads(response.text)['code']
                 logging.info('Auth code = {}'.format(self._auth_code))
                 self._connected = True
             else:
                 logging.error('Error get auth code! {}'.format(json.loads(response.text)
-                                                              ['error']['details'][0]['reason']))
+                                                               ['error']['details'][0]['reason']))
+                self.last_error = 'Error get auth code! {}'.format(json.loads(response.text)
+                                                                   ['error']['details'][0]['reason'])
                 self._connected = False
         except Exception as e:
             self._connected = False
@@ -107,25 +114,57 @@ class pyPLCn(object):
 
     def _authorization(self, login='', password=''):
         try:
-            temp_json = json.loads('{"code":"","grant_type":"authorization_code","username":"","password":"","state":""}')
+            temp_json = json.loads(
+                '{"code":"","grant_type":"authorization_code","username":"","password":"","state":""}')
             temp_json['code'] = self._auth_code
             temp_json['username'] = login
             temp_json['password'] = password
             temp_json['state'] = self._clientState
             request = str(temp_json).replace("""'""", '''"''')
             response = self.s.post('https://{}:443/_pxc_api/v1.2/auth/access-token'.format(self._ip), data=request,
-                                   verify=False)
+                                   verify=False, timeout=self._timeout)
             if int(response.status_code) == 200:
                 self._access_token = json.loads(response.text)['access_token']
                 logging.info('Access token = {}'.format(self._access_token))
                 self._connected = True
             else:
                 logging.error('Error get access token! {}'.format(json.loads(response.text)
-                                                              ['error']['details'][0]['reason']))
+                                                                  ['error']['details'][0]['reason']))
+                self.last_error = 'Error get access token! {}'.format(json.loads(response.text)
+                                                                      ['error']['details'][0]['reason'])
                 self._connected = False
         except Exception as e:
             self._connected = False
             print(e)
+
+    def _task(self):
+        while self._run_flag:
+            try:
+                headers = {'Authorization': 'Bearer {}'.format(self._access_token)}
+                response = self.s.get('https://{0}:443/_pxc_api/v1.2/groups/{1}/?sessionID={2}&'.format(self._ip,
+                                                                                                        self.vars_group,
+                                                                                                        self._session_id
+                                                                                                        ),
+                                      verify=False, headers=headers, timeout=self._timeout)
+                self._status_code = int(response.status_code)
+                if self._status_code == 200:
+                    self.read_vars = json.loads(response.text)['variables']
+                    self._connected = True
+                else:
+                    self._connected = False
+            except Exception as e:
+                self._connected = False
+                self.s.close()
+                logging.error('Connection error! {}'.format(e))
+                self.last_error = 'Connection error! {}'.format(e)
+            finally:
+                if not self._connected and self._run_flag:
+                    for var in self.read_vars:
+                        var['value'] = None
+                    logging.error('Connection error, trying to reconnect in 5 seconds!')
+                    time.sleep(5)
+                    self.connect(self._ip, self._login, self._password, self._poll_time)
+                time.sleep(float(self._poll_time / 1000))
 
     def set_var_names(self, vars=[]):
         """Setting variables to work with them
@@ -134,19 +173,17 @@ class pyPLCn(object):
         """
         self.vars = vars
 
-    def connect(self, ip='127.0.0.1', login='', password='', poll_time=100, station_id=99):
+    def connect(self, ip='127.0.0.1', login='', password='', poll_time=100):
         """Connect to PLC. If you not use authentication leave login and password field blank
         :param ip: IP address of PLC.
         :param login: username with "EHmiViewer", "EHmiChanger" rights.
         :param password: password from account.
         :param poll_time: time of update variables.
-        :param station_id: station id of connection, need if use multiple connections.
         :rtype: None
         """
 
         self._ip = ip
         self._poll_time = poll_time
-        self._station_id = station_id
         self._get_session_id(ip=self._ip)
         if not login == '' and not password == '':
             self._login = login
@@ -166,32 +203,12 @@ class pyPLCn(object):
         """
         return self._connected
 
-    def _task(self):
-        while self._run_flag:
-            try:
-                headers = {'Authorization': 'Bearer {}'.format(self._access_token)}
-                response = self.s.get('https://{0}:443/_pxc_api/v1.2/groups/{1}/?sessionID={2}&'.format(self._ip,
-                                                                                                        self.vars_group,
-                                                                                                        self._session_id),
-                                      verify=False, headers=headers)
-                self._status_code = int(response.status_code)
-                if self._status_code == 200:
-                    self.read_vars = json.loads(response.text)['variables']
-                    self._connected = True
-                else:
-                    self._connected = False
-            except Exception as e:
-                self._connected = False
-                self.s.close()
-                logging.error('Connection error! {}'.format(e))
-            finally:
-                if not self._connected and self._run_flag:
-                    for var in self.read_vars:
-                        var['value'] = None
-                    logging.error('Connection error, trying to reconnect in 5 seconds!')
-                    time.sleep(5)
-                    self.connect(self._ip, self._login, self._password, self._poll_time)
-                time.sleep(float(self._poll_time / 1000))
+    def set_timeout(self, timeout=1):
+        """Set connection timeout.
+        :param timeout: Timeout in seconds.
+        :rtype: None
+        """
+        self._timeout = timeout
 
     def get_var(self, var_name=''):
         """Get one variable from PLC by name.
