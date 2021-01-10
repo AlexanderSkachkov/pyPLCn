@@ -2,7 +2,7 @@
 
 | Date       | Version | Author       |
 |------------|---------|--------------|
-| 2.12.2020 | 1.0.2   | Alexander Skachkov |
+| 2.12.2020 | 1.0.3   | Alexander Skachkov |
 
 ## Description
 
