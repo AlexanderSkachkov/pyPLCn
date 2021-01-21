@@ -39,7 +39,7 @@ If you use HMI authentication you must set login name and password in method `Pl
 |PLCnext(c) Engineer(c)| 2020.0 LTS or later |
 |Python| Version 3 or later |
 
-## Exaple usage
+## Example usage
 
 Upload project to PLC from "examples" folder
 
